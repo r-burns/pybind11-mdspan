@@ -2,72 +2,192 @@
 
 #include <pybind11/numpy.h>
 
+#if __has_include(<mdspan>)
+#include <mdspan>
+PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
+PYBIND11_NAMESPACE_BEGIN(detail)
+using std::basic_mdspan;
+using std::dynamic_extent;
+using std::extents;
+using std::layout_left;
+using std::layout_right;
+using std::layout_stride;
+PYBIND11_NAMESPACE_END(detail)
+PYBIND11_NAMESPACE_END(PYBIND11_NAMESPACE)
+#elif __has_include(<experimental/mdspan>)
 #include <experimental/mdspan>
-namespace pybind11 {
-namespace detail {
-using std::experimental::mdspan;
+PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
+PYBIND11_NAMESPACE_BEGIN(detail)
 using std::experimental::basic_mdspan;
-} // namespace pybind11
-} // namespace detail
+using std::experimental::dynamic_extent;
+using std::experimental::extents;
+using std::experimental::layout_left;
+using std::experimental::layout_right;
+using std::experimental::layout_stride;
+PYBIND11_NAMESPACE_END(detail)
+PYBIND11_NAMESPACE_END(PYBIND11_NAMESPACE)
+#else
+#error "Could not find mdspan header!"
+#endif
+
+#include "log.h"
 
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
 
-template<typename T, typename Extents, typename Layout, typename Access>
+// Convert to fully-unconstrained numpy-compatible mapping
+// TODO do this without triggering -Wunused-value
+template<typename Extents>
+struct fully_dynamic_extents;
+template<ptrdiff_t... Extent>
+struct fully_dynamic_extents<extents<Extent...>> {
+    using type = extents<(Extent, dynamic_extent)...>;
+};
+template<typename Extents>
+struct fully_dynamic_layout;
+template<ptrdiff_t... Extent>
+struct fully_dynamic_layout<extents<Extent...>> {
+    using type = layout_stride<(Extent, dynamic_extent)...>;
+};
+
+// Converts a Numpy ndarray to a dynamic mdspan
+template<typename Scalar, typename Extents, typename Layout, typename Access>
+void ndarray_to_mdspan(array_t<Scalar>& arr, basic_mdspan<Scalar, Extents, Layout, Access>& ret) {
+
+    using Type = basic_mdspan<Scalar, Extents, Layout, Access>;
+
+    // Catch programmer errors
+    static_assert(Extents::rank() == Extents::rank_dynamic(),
+            "Extents must be fully dynamic");
+    static_assert(!Type::mapping_type::is_always_contiguous(),
+            "Layout must be fully strided");
+
+    // Arrays for ndarray shape + stride layout
+    std::array<ptrdiff_t, Extents::rank()> extents_array;
+    std::array<ptrdiff_t, Extents::rank()> strides_array;
+    for (size_t i = 0; i < Extents::rank(); i++) {
+        // TODO will this ever happen?
+        if (arr.strides(i) % sizeof(Scalar) != 0) {
+            LOG("Bad stride(%ld)=%ld is not a multiple of elem size (%lu)\n",
+                    arr.strides(i), extents_array[i], sizeof(Scalar));
+            exit(1);
+        }
+        extents_array[i] = arr.shape(i);
+        strides_array[i] = arr.strides(i) / sizeof(Scalar);
+    }
+
+    const auto extents = typename Type::extents_type(extents_array);
+    const auto mapping = typename Type::mapping_type(extents, strides_array);
+    ret = Type(arr.mutable_data(), mapping);
+}
+
+// NB we won't implement all conversions here, just the ones we care about.
+// Specifically, from fully-dynamic to some level of static specialization.
+template<typename SpanA, typename SpanB>
+_MDSPAN_CONSTEXPR_14 bool convert_to(const SpanA&, SpanB&);
+
+template<typename Span>
+_MDSPAN_CONSTEXPR_14 bool convert_to(const Span& a, Span& b) {
+    b = a;
+    return true;
+}
+
+template<
+    typename Scalar, typename Extents, typename Access,
+    typename DynExtents, typename DynLayout
+>
+_MDSPAN_CONSTEXPR_14 bool convert_to(
+        const basic_mdspan<Scalar, DynExtents, DynLayout, Access> a,
+        basic_mdspan<Scalar, Extents, layout_right, Access>& b) {
+
+    using TypeA = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
+    using TypeB = basic_mdspan<Scalar, Extents, layout_right, Access>;
+
+    // Catch programmer errors
+    static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
+            "Extents must be fully dynamic");
+    static_assert(!TypeA::mapping_type::is_always_contiguous(),
+            "Layout must be fully strided");
+    static_assert(Extents::rank() == Extents::rank_dynamic(),
+            "Partial static extents not yet implemented :(");
+
+    typename TypeB::mapping_type map(a.extents());
+    for (size_t i = 0; i < Extents::rank(); i++) {
+        if (b.static_extent(i) != dynamic_extent &&
+            b.static_extent(i) != a.extent(i)) {
+            LOG("Static extent does not match\n");
+            return false;
+        }
+        if (map.stride(i) != a.stride(i)) {
+            LOG("Stride does not match (got %ld, expected %ld)\n", a.stride(i), b.stride(i));
+            return false;
+        }
+    }
+    b = TypeB(a.data(), map);
+    return true;
+}
+
+// The actual type caster - defined in terms of the above
+// We trivially cast the ndarray to an underconstrained mdspan,
+// and then check that the mdspan satisfies the type we actually want.
+template<typename T, typename Extents, typename Access, typename Layout>
 struct type_caster<
     basic_mdspan<T, Extents, Layout, Access>,
+    // TODO support static extents
     enable_if_t<Extents::rank() == Extents::rank_dynamic()>
 > {
 
-    using Type = basic_mdspan<T, Extents, Layout, Access>;
-
 private:
-    using Array = array_t<T, array::forcecast | array::c_style>;
-    Array copy_or_ref;
+    using Type = basic_mdspan<T, Extents, Layout, Access>;
+    using Mapping = typename Type::mapping_type;
+
+    using DynExtents = typename fully_dynamic_extents<Extents>::type;
+    using DynLayout  = typename fully_dynamic_layout <Extents>::type;
+    using DynType = basic_mdspan<T, DynExtents, DynLayout, Access>;
+
+    using Array = array_t<T, array::forcecast>;
+
+    Type ref;
 
 public:
     static constexpr auto name = _("mdspan-from-ndarray");
 
-    std::unique_ptr<Type> ref;
+    static constexpr bool need_writeable = !std::is_const<T>::value;
 
-    // TODO
-    static constexpr bool need_writeable = false;
+    bool load(handle src, bool /* TODO conversion not supported */) {
 
-    bool load(handle src, bool convert) {
-
-        bool need_copy = !isinstance<Array>(src);
-        if (need_copy) {
+        if (!isinstance<Array>(src)) {
+            LOG("Not an instance of array<%s>", typeid(T).name());
             return false;
         }
 
         auto aref = reinterpret_borrow<Array>(src);
 
         if (!aref || (need_writeable && !aref.writeable())) {
+            LOG("Could not cast writeable array\n");
             return false;
         }
 
         if (Extents::rank() != aref.ndim()) {
+            LOG("Wrong rank (%ld vs %ld)\n", Extents::rank(), aref.ndim());
             return false;
         }
 
-        std::array<ptrdiff_t, Extents::rank()> dyn_exts;
-        for (int i = 0; i < Extents::rank(); i++) {
-            dyn_exts[i] = aref.shape(i);
+        DynType dref;
+        ndarray_to_mdspan(aref, dref);
+
+        if (!convert_to(dref, ref)) {
+            LOG("Could not specialize ndarray to specified mdspan\n");
+            return false;
         }
-
-        copy_or_ref = std::move(aref);
-
-        ref.reset(new Type(data(copy_or_ref), dyn_exts));
         return true;
     }
 
-    operator Type*() { return ref.get(); }
-    operator Type&() { return *ref; }
+    operator Type*() { return &ref; }
+    operator Type&() { return ref; }
+
     template<typename U>
     using cast_op_type = pybind11::detail::cast_op_type<U>;
-
-private:
-    T* data(Array& a) { return a.mutable_data(); }
 };
 
 PYBIND11_NAMESPACE_END(detail)
