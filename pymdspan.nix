@@ -14,8 +14,7 @@ stdenv.mkDerivation rec {
       basename = baseNameOf (toString name);
     in !(
       basename == "build" ||
-      lib.hasSuffix ".nix" basename ||
-      lib.hasSuffix ".py" basename
+      lib.hasSuffix ".nix" basename
     );
     src = lib.cleanSource ./.;
   };
@@ -34,10 +33,9 @@ stdenv.mkDerivation rec {
     mdspan
     pybind11
   ];
-  nativeInstallCheckInputs = [
-    pytest
-  ];
-  installCheckInputs = [
+
+  doCheck = with stdenv; buildPlatform == hostPlatform;
+  checkInputs = [
     numpy
     pytest
   ];

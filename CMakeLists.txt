@@ -10,7 +10,21 @@ set(PYTHON_PKGDIR pkgs CACHE STRING "Where to install python pkgs")
 find_package(pybind11 2.5 CONFIG REQUIRED)
 find_package(MDSpan CONFIG REQUIRED)
 
-pybind11_add_module(pymdspan pymdspan.cpp)
-target_link_libraries(pymdspan PRIVATE std::mdspan)
+include(GNUInstallDirs)
 
-install(TARGETS pymdspan DESTINATION "${PYTHON_PKGDIR}")
+add_library(pybind11-mdspan INTERFACE)
+target_include_directories(pybind11-mdspan INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+include(CTest)
+if(BUILD_TESTING)
+    pybind11_add_module(pymdspan pymdspan.cpp)
+    target_link_libraries(pymdspan PRIVATE std::mdspan pybind11-mdspan)
+
+    add_test(NAME pytests COMMAND pytest ${CMAKE_CURRENT_SOURCE_DIR})
+    set_tests_properties(pytests PROPERTIES ENVIRONMENT
+        "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}")
+endif()

@@ -1,7 +1,5 @@
 #include <pybind11/pybind11.h>
-#include "pybind11-mdspan.hpp"
-
-#include "log.h"
+#include <pybind11/mdspan.h>
 
 namespace stdex = std::experimental;
 
