@@ -21,10 +21,5 @@ install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 include(CTest)
 if(BUILD_TESTING)
-    pybind11_add_module(pymdspan pymdspan.cpp)
-    target_link_libraries(pymdspan PRIVATE std::mdspan pybind11-mdspan)
-
-    add_test(NAME pytests COMMAND pytest ${CMAKE_CURRENT_SOURCE_DIR})
-    set_tests_properties(pytests PROPERTIES ENVIRONMENT
-        "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}")
+    add_subdirectory(tests)
 endif()
