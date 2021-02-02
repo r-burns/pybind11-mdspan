@@ -35,6 +35,7 @@ stdenv.mkDerivation rec {
   ];
 
   doCheck = with stdenv; buildPlatform == hostPlatform;
+  checkFlags = [ "VERBOSE=ON" ];
   checkInputs = [
     numpy
     pytest
