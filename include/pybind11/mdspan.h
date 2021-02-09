@@ -130,34 +130,34 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 // The actual type caster - defined in terms of the above
 // We trivially cast the ndarray to an underconstrained mdspan,
 // and then check that the mdspan satisfies the type we actually want.
-template<typename T, typename Extents, typename Access, typename Layout>
+template<typename Scalar, typename Extents, typename Access, typename Layout>
 struct type_caster<
-    basic_mdspan<T, Extents, Layout, Access>,
+    basic_mdspan<Scalar, Extents, Layout, Access>,
     // TODO support static extents
     enable_if_t<Extents::rank() == Extents::rank_dynamic()>
 > {
 
 private:
-    using Type = basic_mdspan<T, Extents, Layout, Access>;
+    using Type = basic_mdspan<Scalar, Extents, Layout, Access>;
     using Mapping = typename Type::mapping_type;
 
     using DynExtents = typename fully_dynamic_extents<Extents>::type;
     using DynLayout  = typename fully_dynamic_layout <Extents>::type;
-    using DynType = basic_mdspan<T, DynExtents, DynLayout, Access>;
+    using DynType = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
 
-    using Array = array_t<T, array::forcecast>;
+    using Array = array_t<Scalar, array::forcecast>;
 
     Type ref;
 
 public:
     static constexpr auto name = _("mdspan-from-ndarray");
 
-    static constexpr bool need_writeable = !std::is_const<T>::value;
+    static constexpr bool need_writeable = !std::is_const<Scalar>::value;
 
     bool load(handle src, bool /* TODO conversion not supported */) {
 
         if (!isinstance<Array>(src)) {
-            LOG("Not an instance of array<%s>", typeid(T).name());
+            LOG("Not an instance of array<%s>", typeid(Scalar).name());
             return false;
         }
 
