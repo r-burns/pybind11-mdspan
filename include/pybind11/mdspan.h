@@ -157,7 +157,7 @@ public:
     bool load(handle src, bool /* TODO conversion not supported */) {
 
         if (!isinstance<Array>(src)) {
-            PYMDSPAN_LOG("Not an instance of array<%s>", typeid(Scalar).name());
+            PYMDSPAN_LOG("Not an instance of array<%s>\n", typeid(Scalar).name());
             return false;
         }
 
