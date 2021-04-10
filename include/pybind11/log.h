@@ -1,8 +1,12 @@
 #pragma once
 
-#if 0
+#if not defined(PYMDSPAN_LOG_ENABLED)
+#define PYMDSPAN_LOG_ENABLED 0
+#endif
+
+#if PYMDSPAN_LOG_ENABLED
 #include <stdio.h>
-#define LOG(...) printf(__VA_ARGS__);
+#define PYMDSPAN_LOG(...) printf(__VA_ARGS__);
 #else
-#define LOG(...)
+#define PYMDSPAN_LOG(...)
 #endif

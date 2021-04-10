@@ -68,7 +68,7 @@ void ndarray_to_mdspan(array_t<Scalar>& arr, basic_mdspan<Scalar, Extents, Layou
     for (size_t i = 0; i < Extents::rank(); i++) {
         // TODO will this ever happen?
         if (arr.strides(i) % sizeof(Scalar) != 0) {
-            LOG("Bad stride(%ld)=%ld is not a multiple of elem size (%lu)\n",
+            PYMDSPAN_LOG("Bad stride(%ld)=%ld is not a multiple of elem size (%lu)\n",
                     arr.strides(i), extents_array[i], sizeof(Scalar));
             exit(1);
         }
@@ -115,11 +115,11 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
     for (size_t i = 0; i < Extents::rank(); i++) {
         if (b.static_extent(i) != dynamic_extent &&
             b.static_extent(i) != a.extent(i)) {
-            LOG("Static extent does not match\n");
+            PYMDSPAN_LOG("Static extent does not match\n");
             return false;
         }
         if (map.stride(i) != a.stride(i)) {
-            LOG("Stride does not match (got %ld, expected %ld)\n", a.stride(i), b.stride(i));
+            PYMDSPAN_LOG("Stride does not match (got %ld, expected %ld)\n", a.stride(i), b.stride(i));
             return false;
         }
     }
@@ -157,19 +157,19 @@ public:
     bool load(handle src, bool /* TODO conversion not supported */) {
 
         if (!isinstance<Array>(src)) {
-            LOG("Not an instance of array<%s>", typeid(Scalar).name());
+            PYMDSPAN_LOG("Not an instance of array<%s>", typeid(Scalar).name());
             return false;
         }
 
         auto aref = reinterpret_borrow<Array>(src);
 
         if (!aref || (need_writeable && !aref.writeable())) {
-            LOG("Could not cast writeable array\n");
+            PYMDSPAN_LOG("Could not cast writeable array\n");
             return false;
         }
 
         if (Extents::rank() != aref.ndim()) {
-            LOG("Wrong rank (%ld vs %ld)\n", Extents::rank(), aref.ndim());
+            PYMDSPAN_LOG("Wrong rank (%ld vs %ld)\n", Extents::rank(), aref.ndim());
             return false;
         }
 
@@ -177,7 +177,7 @@ public:
         ndarray_to_mdspan(aref, dref);
 
         if (!convert_to(dref, ref)) {
-            LOG("Could not specialize ndarray to specified mdspan\n");
+            PYMDSPAN_LOG("Could not specialize ndarray to specified mdspan\n");
             return false;
         }
         return true;
