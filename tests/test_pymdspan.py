@@ -87,3 +87,21 @@ def test_sum_int_2d_dense():
         pass
     else:
         assert False
+
+def test_sum_float_2d_dense():
+    from pymdspan import sum_float_2d_dense
+    a = numpy.array([[1, 2],
+                     [3, 4]], dtype=float)
+    assert sum_float_2d_dense(a) == 10
+
+    # Make sure that strided access does not cast
+    a = numpy.array([[1, 1, 0],
+                     [1, 1, 0],
+                     [0, 0, 0]], dtype=numpy.float64)
+    assert sum_float_2d_dense(a) == 4
+    try:
+        sum_float_2d_dense(a[:2,:2])
+    except TypeError:
+        pass
+    else:
+        assert False
