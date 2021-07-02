@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(PYTHON_PKGDIR pkgs CACHE STRING "Where to install python pkgs")
 
 find_package(pybind11 2.5 CONFIG REQUIRED)
-find_package(MDSpan CONFIG REQUIRED)
+find_package(mdspan CONFIG REQUIRED)
 
 include(GNUInstallDirs)
 

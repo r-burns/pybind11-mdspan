@@ -1,25 +1,18 @@
 { lib, stdenv
 , cmake
 , fetchFromGitHub
-, fetchpatch
 , gtest
 }:
 stdenv.mkDerivation rec {
   pname = "mdspan";
-  version = "unstable";
+  version = "0.1.0";
 
   src = fetchFromGitHub {
     owner = "kokkos";
     repo = pname;
-    rev = "371250b2341e6196b823337e4ea4d3474c879310";
-    sha256 = "10341943dlmxb2j64wnbryaqmv6b1n1pd407wdzvxdvk3a0sv0kr";
+    rev = "mdspan-${version}";
+    sha256 = "0hyfgrsqrj7nhs148klbhg5ckm0npwnhhbqal98jbkphiz6xnb55";
   };
-  patches = [
-    (fetchpatch {
-      url = "https://github.com/kokkos/mdspan/commit/626fb681b34e62d42ac0d66dd914343c6711c1e0.patch";
-      sha256 = "0mmfdh8lcfdqmw27xl897vzzs3hl4i0d62xi3v9mfzp731cpkc64";
-    })
-  ];
 
   nativeBuildInputs = [
     cmake
@@ -38,9 +31,7 @@ stdenv.mkDerivation rec {
   ];
 
   meta = with lib; {
-    description = ''
-      Production-quality reference implementation of mdspan
-    '';
+    description = "Production-quality reference implementation of mdspan";
     longDescription = ''
       The ISO-C++ proposal P0009 will add support for non-owning
       multi-dimensional array references to the C++ standard library.
