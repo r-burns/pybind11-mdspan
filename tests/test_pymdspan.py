@@ -94,3 +94,54 @@ def test_sum_float_2d_dense():
     assert sum_float_2d_dense(a) == 4
     with pytest.raises(TypeError):
         sum_float_2d_dense(a[:2,:2])
+
+def test_get_2d():
+    from pymdspan import get_int_2d
+    a = numpy.arange(16).reshape((4, 4))
+    assert get_int_2d(a, 0, 0) == 0
+    assert get_int_2d(a, 1, 1) == 5
+    assert get_int_2d(a, 0, 1) == 1
+    assert get_int_2d(a, 1, 0) == 4
+
+    assert get_int_2d(a[::2, ::2], 0, 0) == 0
+    assert get_int_2d(a[::2, ::2], 1, 1) == 10
+    assert get_int_2d(a[::2, ::2], 0, 1) == 2
+    assert get_int_2d(a[::2, ::2], 1, 0) == 8
+
+def test_fixedsize():
+    from pymdspan import get_int_2d_fixed2n, get_int_2d_fixed22
+
+    a = numpy.arange(16).reshape((4, 4))
+    with pytest.raises(TypeError):
+        get_int_2d_fixed22(a, 0, 0)
+
+    assert get_int_2d_fixed22(a[:2, :2], 0, 0) == 0
+    assert get_int_2d_fixed22(a[:2, :2], 0, 1) == 1
+    assert get_int_2d_fixed22(a[:2, :2], 1, 0) == 4
+    assert get_int_2d_fixed22(a[:2, :2], 1, 1) == 5
+
+    assert get_int_2d_fixed22(a[::2, ::2], 0, 0) == 0
+    assert get_int_2d_fixed22(a[::2, ::2], 1, 1) == 10
+    assert get_int_2d_fixed22(a[::2, ::2], 0, 1) == 2
+    assert get_int_2d_fixed22(a[::2, ::2], 1, 0) == 8
+
+    a = numpy.arange(16).reshape((4, 4))
+    with pytest.raises(TypeError):
+        get_int_2d_fixed2n(a, 0, 0)
+    with pytest.raises(TypeError):
+        get_int_2d_fixed2n(a[:, :2], 0, 0)
+
+    assert get_int_2d_fixed2n(a[:2, :2], 0, 0) == 0
+    assert get_int_2d_fixed2n(a[:2, :2], 0, 1) == 1
+    assert get_int_2d_fixed2n(a[:2, :2], 1, 0) == 4
+    assert get_int_2d_fixed2n(a[:2, :2], 1, 1) == 5
+
+    assert get_int_2d_fixed2n(a[:2, :], 0, 0) == 0
+    assert get_int_2d_fixed2n(a[:2, :], 0, 1) == 1
+    assert get_int_2d_fixed2n(a[:2, :], 1, 0) == 4
+    assert get_int_2d_fixed2n(a[:2, :], 1, 1) == 5
+
+    assert get_int_2d_fixed2n(a[::2, ::2], 0, 0) == 0
+    assert get_int_2d_fixed2n(a[::2, ::2], 1, 1) == 10
+    assert get_int_2d_fixed2n(a[::2, ::2], 0, 1) == 2
+    assert get_int_2d_fixed2n(a[::2, ::2], 1, 0) == 8

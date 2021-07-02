@@ -50,9 +50,29 @@ T sum_3d_dense(DenseSpan3D<T> a) {
     return sum;
 }
 
+template<typename T>
+T get_2d(StridedSpan2D<T> a, int i, int j) {
+    return a(i, j);
+}
+
 PYBIND11_MODULE(pymdspan, m) {
     m.def("sum_int_2d", sum_2d<int64_t>);
     m.def("sum_int_2d_dense", sum_2d_dense<int64_t>);
     m.def("sum_float_2d_dense", sum_2d_dense<double>);
     m.def("sum_int_3d_dense", sum_3d_dense<int64_t>);
+    m.def("get_int_2d", get_2d<int64_t>);
+
+    using namespace pybind11::detail;
+    {
+        using arr = basic_mdspan<int64_t, extents<2, dynamic_extent>, Stride2D>;
+        m.def("get_int_2d_fixed2n", [](arr a, int i, int j) -> int64_t {
+                return a(i, j);
+        });
+    }
+    {
+        using arr = basic_mdspan<int64_t, extents<2, 2>, Stride2D>;
+        m.def("get_int_2d_fixed22", [](arr a, int i, int j) -> int64_t {
+                return a(i, j);
+        });
+    }
 }

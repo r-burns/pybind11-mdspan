@@ -127,14 +127,53 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
     return true;
 }
 
+template<
+    typename Scalar, typename Extents, typename Layout, typename Access,
+    typename DynExtents, typename DynLayout,
+    typename = std::enable_if<
+        !std::is_same<
+            basic_mdspan<Scalar, DynExtents, DynLayout, Access>,
+            basic_mdspan<Scalar, Extents, Layout, Access>
+        >::value
+        && Extents::rank() != Extents::rank_dynamic()
+    >::type
+>
+_MDSPAN_CONSTEXPR_14 bool convert_to(
+        const basic_mdspan<Scalar, DynExtents, DynLayout, Access> a,
+        basic_mdspan<Scalar, Extents, Layout, Access>& b) {
+
+    using TypeA = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
+    using TypeB = basic_mdspan<Scalar, Extents, Layout, Access>;
+
+    // Catch programmer errors
+    static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
+            "Extents must be fully dynamic");
+    static_assert(!TypeA::mapping_type::is_always_contiguous(),
+            "Layout must be fully strided");
+
+    std::array<ptrdiff_t, Extents::rank()> strides;
+    for (size_t i = 0; i < Extents::rank(); i++) {
+        strides[i] = a.stride(i);
+    }
+
+    typename TypeB::mapping_type map = {a.extents(), strides};
+    for (size_t i = 0; i < Extents::rank(); i++) {
+        if (b.static_extent(i) != dynamic_extent &&
+            b.static_extent(i) != a.extent(i)) {
+            PYMDSPAN_LOG("Static extent does not match\n");
+            return false;
+        }
+    }
+    b = TypeB(a.data(), map);
+    return true;
+}
+
 // The actual type caster - defined in terms of the above
 // We trivially cast the ndarray to an underconstrained mdspan,
 // and then check that the mdspan satisfies the type we actually want.
 template<typename Scalar, typename Extents, typename Access, typename Layout>
 struct type_caster<
-    basic_mdspan<Scalar, Extents, Layout, Access>,
-    // TODO support static extents
-    enable_if_t<Extents::rank() == Extents::rank_dynamic()>
+    basic_mdspan<Scalar, Extents, Layout, Access>
 > {
 
 private:
