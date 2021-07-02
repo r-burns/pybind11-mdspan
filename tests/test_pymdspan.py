@@ -1,4 +1,5 @@
 import numpy
+import pytest
 
 def test_sum_int_2d_trivial():
     from pymdspan import sum_int_2d
@@ -63,12 +64,8 @@ def test_sum_int_3d_dense():
                       [1, 1, 0],
                       [0, 0, 0]]])
     assert sum_int_3d_dense(a) == 8
-    try:
+    with pytest.raises(TypeError):
         sum_int_3d_dense(a[:2,:2,:])
-    except TypeError:
-        pass
-    else:
-        assert False # Not acceptable
 
 def test_sum_int_2d_dense():
     from pymdspan import sum_int_2d_dense
@@ -81,12 +78,8 @@ def test_sum_int_2d_dense():
                      [1, 1, 0],
                      [0, 0, 0]])
     assert sum_int_2d_dense(a) == 4
-    try:
+    with pytest.raises(TypeError):
         sum_int_2d_dense(a[:2,:2])
-    except TypeError:
-        pass
-    else:
-        assert False
 
 def test_sum_float_2d_dense():
     from pymdspan import sum_float_2d_dense
@@ -99,9 +92,5 @@ def test_sum_float_2d_dense():
                      [1, 1, 0],
                      [0, 0, 0]], dtype=numpy.float64)
     assert sum_float_2d_dense(a) == 4
-    try:
+    with pytest.raises(TypeError):
         sum_float_2d_dense(a[:2,:2])
-    except TypeError:
-        pass
-    else:
-        assert False
