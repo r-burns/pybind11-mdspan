@@ -1,6 +1,7 @@
 { lib, stdenv
 , cmake
 , fetchFromGitHub
+, fetchpatch
 , gtest
 }:
 stdenv.mkDerivation rec {
@@ -13,6 +14,14 @@ stdenv.mkDerivation rec {
     rev = "mdspan-${version}";
     sha256 = "0hyfgrsqrj7nhs148klbhg5ckm0npwnhhbqal98jbkphiz6xnb55";
   };
+
+  patches = [
+    # Remove exported target's interface C++ standard
+    (fetchpatch {
+      url = "https://github.com/kokkos/mdspan/commit/c9058a9f9d8fe9a1f69d20d9ba7ad23d820b950c.patch";
+      sha256 = "1zjk14rasa2856dfvyk8hma9annhjw944m691hp87kl0ykjrzkjw";
+    })
+  ];
 
   nativeBuildInputs = [
     cmake
