@@ -130,7 +130,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 template<
     typename Scalar, typename Extents, typename Layout, typename Access,
     typename DynExtents, typename DynLayout,
-    typename = std::enable_if<
+    typename = typename std::enable_if<
         !std::is_same<
             basic_mdspan<Scalar, DynExtents, DynLayout, Access>,
             basic_mdspan<Scalar, Extents, Layout, Access>
