@@ -21,6 +21,11 @@ stdenv.mkDerivation rec {
       url = "https://github.com/kokkos/mdspan/commit/c9058a9f9d8fe9a1f69d20d9ba7ad23d820b950c.patch";
       sha256 = "1zjk14rasa2856dfvyk8hma9annhjw944m691hp87kl0ykjrzkjw";
     })
+    # Use system gtest
+    (fetchpatch {
+      url = "https://github.com/kokkos/mdspan/commit/11076ff0d841b8da05a2213b5eab58c4218acaa0.patch";
+      sha256 = "0rcsh14i972a53pg7vfr4ijp9gwv10lyvvajxffim7jrk4gfn5qn";
+    })
   ];
 
   nativeBuildInputs = [
@@ -31,12 +36,11 @@ stdenv.mkDerivation rec {
     gtest
   ];
 
-  # TODO stdenv.buildPlatform == stdenv.hostPlatform;
-  # gtest is fetched unconditionally
-  doCheck = false;
+  doCheck = true;
 
   cmakeFlags = [
     "-DMDSPAN_ENABLE_TESTS=${lib.boolToString doCheck}"
+    "-DMDSPAN_USE_SYSTEM_GTEST=ON"
   ];
 
   meta = with lib; {
