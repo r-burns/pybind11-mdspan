@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.14...3.19)
 
 project(pymdspan LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
-
 set(PYTHON_PKGDIR pkgs CACHE STRING "Where to install python pkgs")
 
 find_package(pybind11 2.5 CONFIG REQUIRED)
@@ -19,7 +16,16 @@ target_include_directories(pybind11-mdspan INTERFACE
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
+set(PYMDSPAN_TEST_STANDARDS "11;14;17;20" CACHE STRING
+    "C++ standards to build tests against")
+
 include(CTest)
 if(BUILD_TESTING)
-    add_subdirectory(tests)
+
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+    foreach(CMAKE_CXX_STANDARD ${PYMDSPAN_TEST_STANDARDS})
+        add_subdirectory(tests "tests_cxx_std_${CMAKE_CXX_STANDARD}")
+    endforeach()
+
 endif()
