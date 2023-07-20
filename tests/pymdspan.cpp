@@ -6,14 +6,13 @@ namespace stdex = std::experimental;
 using Extents1D = stdex::extents<stdex::dynamic_extent>;
 using Extents2D = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent>;
 using Extents3D = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent, stdex::dynamic_extent>;
-using Stride2D = stdex::layout_stride<stdex::dynamic_extent, stdex::dynamic_extent>;
 
 template<typename T>
 using DenseSpan2D = stdex::basic_mdspan<T, Extents2D, stdex::layout_right>;
 template<typename T>
 using DenseSpan3D = stdex::basic_mdspan<T, Extents3D, stdex::layout_right>;
 template<typename T>
-using StridedSpan2D = stdex::basic_mdspan<T, Extents2D, Stride2D>;
+using StridedSpan2D = stdex::basic_mdspan<T, Extents2D, stdex::layout_stride>;
 
 template<typename T>
 T sum_2d(StridedSpan2D<T> a) {
@@ -64,13 +63,13 @@ PYBIND11_MODULE(pymdspan, m) {
 
     using namespace pybind11::detail;
     {
-        using arr = basic_mdspan<int64_t, extents<2, dynamic_extent>, Stride2D>;
+        using arr = basic_mdspan<int64_t, extents<2, dynamic_extent>, stdex::layout_stride>;
         m.def("get_int_2d_fixed2n", [](arr a, int i, int j) -> int64_t {
                 return a(i, j);
         });
     }
     {
-        using arr = basic_mdspan<int64_t, extents<2, 2>, Stride2D>;
+        using arr = basic_mdspan<int64_t, extents<2, 2>, stdex::layout_stride>;
         m.def("get_int_2d_fixed22", [](arr a, int i, int j) -> int64_t {
                 return a(i, j);
         });

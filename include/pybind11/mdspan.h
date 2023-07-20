@@ -43,12 +43,6 @@ template<size_t... Extent>
 struct fully_dynamic_extents<extents<Extent...>> {
     using type = extents<(Extent, dynamic_extent)...>;
 };
-template<typename Extents>
-struct fully_dynamic_layout;
-template<size_t... Extent>
-struct fully_dynamic_layout<extents<Extent...>> {
-    using type = layout_stride<(Extent, dynamic_extent)...>;
-};
 
 // Converts a Numpy ndarray to a dynamic mdspan
 template<typename Scalar, typename Extents, typename Layout, typename Access>
@@ -94,13 +88,13 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(const Span& a, Span& b) {
 
 template<
     typename Scalar, typename Extents, typename Access,
-    typename DynExtents, typename DynLayout
+    typename DynExtents
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
-        const basic_mdspan<Scalar, DynExtents, DynLayout, Access> a,
+        const basic_mdspan<Scalar, DynExtents, layout_stride, Access> a,
         basic_mdspan<Scalar, Extents, layout_right, Access>& b) {
 
-    using TypeA = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
+    using TypeA = basic_mdspan<Scalar, DynExtents, layout_stride, Access>;
     using TypeB = basic_mdspan<Scalar, Extents, layout_right, Access>;
 
     // Catch programmer errors
@@ -129,20 +123,20 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 
 template<
     typename Scalar, typename Extents, typename Layout, typename Access,
-    typename DynExtents, typename DynLayout,
+    typename DynExtents,
     typename = typename std::enable_if<
         !std::is_same<
-            basic_mdspan<Scalar, DynExtents, DynLayout, Access>,
+            basic_mdspan<Scalar, DynExtents, layout_stride, Access>,
             basic_mdspan<Scalar, Extents, Layout, Access>
         >::value
         && Extents::rank() != Extents::rank_dynamic()
     >::type
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
-        const basic_mdspan<Scalar, DynExtents, DynLayout, Access> a,
+        const basic_mdspan<Scalar, DynExtents, layout_stride, Access> a,
         basic_mdspan<Scalar, Extents, Layout, Access>& b) {
 
-    using TypeA = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
+    using TypeA = basic_mdspan<Scalar, DynExtents, layout_stride, Access>;
     using TypeB = basic_mdspan<Scalar, Extents, Layout, Access>;
 
     // Catch programmer errors
@@ -181,8 +175,7 @@ private:
     using Mapping = typename Type::mapping_type;
 
     using DynExtents = typename fully_dynamic_extents<Extents>::type;
-    using DynLayout  = typename fully_dynamic_layout <Extents>::type;
-    using DynType = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
+    using DynType = basic_mdspan<Scalar, DynExtents, layout_stride, Access>;
 
     using Array = array_t<Scalar, array::forcecast>;
 
