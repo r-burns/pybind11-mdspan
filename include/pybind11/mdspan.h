@@ -150,7 +150,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
         strides[i] = a.stride(i);
     }
 
-    typename TypeB::mapping_type map = {a.extents(), strides};
+    typename TypeB::mapping_type map{Extents{a.extents()}, strides};
     for (size_t i = 0; i < Extents::rank(); i++) {
         if (b.static_extent(i) != dynamic_extent &&
             b.static_extent(i) != a.extent(i)) {
