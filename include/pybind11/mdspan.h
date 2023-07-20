@@ -53,7 +53,7 @@ void ndarray_to_mdspan(array_t<Scalar>& arr, mdspan<Scalar, Extents, Layout, Acc
     // Catch programmer errors
     static_assert(Extents::rank() == Extents::rank_dynamic(),
             "Extents must be fully dynamic");
-    static_assert(!Type::mapping_type::is_always_contiguous(),
+    static_assert(!Type::mapping_type::is_always_exhaustive(),
             "Layout must be fully strided");
 
     // Arrays for ndarray shape + stride layout
@@ -100,7 +100,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
     // Catch programmer errors
     static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
             "Extents must be fully dynamic");
-    static_assert(!TypeA::mapping_type::is_always_contiguous(),
+    static_assert(!TypeA::mapping_type::is_always_exhaustive(),
             "Layout must be fully strided");
     static_assert(Extents::rank() == Extents::rank_dynamic(),
             "Partial static extents not yet implemented :(");
@@ -142,7 +142,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
     // Catch programmer errors
     static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
             "Extents must be fully dynamic");
-    static_assert(!TypeA::mapping_type::is_always_contiguous(),
+    static_assert(!TypeA::mapping_type::is_always_exhaustive(),
             "Layout must be fully strided");
 
     std::array<size_t, Extents::rank()> strides;
