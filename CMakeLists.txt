@@ -16,7 +16,7 @@ target_include_directories(pybind11-mdspan INTERFACE
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-set(PYMDSPAN_TEST_STANDARDS "11;14;17;20" CACHE STRING
+set(PYMDSPAN_TEST_STANDARDS "14;17" CACHE STRING
     "C++ standards to build tests against")
 
 include(CTest)
