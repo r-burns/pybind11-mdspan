@@ -17,8 +17,8 @@ using StridedSpan2D = stdex::mdspan<T, Extents2D, stdex::layout_stride>;
 template<typename T>
 T sum_2d(StridedSpan2D<T> a) {
     T sum = 0;
-    for (int i = 0; i < a.extent(0); i++) {
-        for (int j = 0; j < a.extent(1); j++) {
+    for (size_t i = 0; i < a.extent(0); i++) {
+        for (size_t j = 0; j < a.extent(1); j++) {
             sum += a(i, j);
         }
     }
@@ -28,8 +28,8 @@ T sum_2d(StridedSpan2D<T> a) {
 template<typename T>
 T sum_2d_dense(DenseSpan2D<T> a) {
     T sum = 0;
-    for (int i = 0; i < a.extent(0); i++) {
-        for (int j = 0; j < a.extent(1); j++) {
+    for (size_t i = 0; i < a.extent(0); i++) {
+        for (size_t j = 0; j < a.extent(1); j++) {
             sum += a(i, j);
         }
     }
@@ -39,9 +39,9 @@ T sum_2d_dense(DenseSpan2D<T> a) {
 template<typename T>
 T sum_3d_dense(DenseSpan3D<T> a) {
     T sum = 0;
-    for (int i = 0; i < a.extent(0); i++) {
-        for (int j = 0; j < a.extent(1); j++) {
-            for (int k = 0; k < a.extent(2); k++) {
+    for (size_t i = 0; i < a.extent(0); i++) {
+        for (size_t j = 0; j < a.extent(1); j++) {
+            for (size_t k = 0; k < a.extent(2); k++) {
                 sum += a(i, j, k);
             }
         }
