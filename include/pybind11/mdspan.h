@@ -39,13 +39,13 @@ PYBIND11_NAMESPACE_BEGIN(detail)
 // TODO do this without triggering -Wunused-value
 template<typename Extents>
 struct fully_dynamic_extents;
-template<ptrdiff_t... Extent>
+template<size_t... Extent>
 struct fully_dynamic_extents<extents<Extent...>> {
     using type = extents<(Extent, dynamic_extent)...>;
 };
 template<typename Extents>
 struct fully_dynamic_layout;
-template<ptrdiff_t... Extent>
+template<size_t... Extent>
 struct fully_dynamic_layout<extents<Extent...>> {
     using type = layout_stride<(Extent, dynamic_extent)...>;
 };
@@ -63,8 +63,8 @@ void ndarray_to_mdspan(array_t<Scalar>& arr, basic_mdspan<Scalar, Extents, Layou
             "Layout must be fully strided");
 
     // Arrays for ndarray shape + stride layout
-    std::array<ptrdiff_t, Extents::rank()> extents_array;
-    std::array<ptrdiff_t, Extents::rank()> strides_array;
+    std::array<size_t, Extents::rank()> extents_array;
+    std::array<size_t, Extents::rank()> strides_array;
     for (size_t i = 0; i < Extents::rank(); i++) {
         // TODO will this ever happen?
         if (arr.strides(i) % sizeof(Scalar) != 0) {
@@ -151,7 +151,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
     static_assert(!TypeA::mapping_type::is_always_contiguous(),
             "Layout must be fully strided");
 
-    std::array<ptrdiff_t, Extents::rank()> strides;
+    std::array<size_t, Extents::rank()> strides;
     for (size_t i = 0; i < Extents::rank(); i++) {
         strides[i] = a.stride(i);
     }
