@@ -54,12 +54,18 @@ T get_2d(StridedSpan2D<T> a, int i, int j) {
     return a(i, j);
 }
 
+template<typename T>
+void set_2d(StridedSpan2D<T> a, int i, int j, T val) {
+    a(i, j) = val;
+}
+
 PYBIND11_MODULE(pymdspan, m) {
     m.def("sum_int_2d", sum_2d<int64_t>);
     m.def("sum_int_2d_dense", sum_2d_dense<int64_t>);
     m.def("sum_float_2d_dense", sum_2d_dense<double>);
     m.def("sum_int_3d_dense", sum_3d_dense<int64_t>);
     m.def("get_int_2d", get_2d<int64_t>);
+    m.def("set_int_2d", set_2d<int64_t>);
 
     using namespace pybind11::detail;
     {

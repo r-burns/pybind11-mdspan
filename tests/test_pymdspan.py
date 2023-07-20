@@ -108,6 +108,40 @@ def test_get_2d():
     assert get_int_2d(a[::2, ::2], 0, 1) == 2
     assert get_int_2d(a[::2, ::2], 1, 0) == 8
 
+    assert get_int_2d(a[1:, 1:], 0, 0) == 5
+
+def test_modify_2d():
+    from pymdspan import get_int_2d, set_int_2d
+    a = numpy.arange(16).reshape((4, 4))
+    assert get_int_2d(a, 0, 0) == 0
+
+    assert get_int_2d(a, 1, 1) == 5
+    set_int_2d(a, 1, 1, 6)
+    assert get_int_2d(a, 1, 1) == 6
+
+    assert get_int_2d(a, 0, 1) == 1
+    set_int_2d(a, 0, 1, 2)
+    assert get_int_2d(a, 0, 1) == 2
+
+    assert get_int_2d(a, 1, 0) == 4
+    set_int_2d(a, 1, 0, 5)
+    assert get_int_2d(a, 1, 0) == 5
+
+    assert get_int_2d(a[::2, ::2], 0, 0) == 0
+    set_int_2d(a[::2, ::2], 0, 0, 1)
+    assert get_int_2d(a[::2, ::2], 0, 0) == 1
+
+    assert get_int_2d(a[::2, ::2], 1, 1) == 10
+    set_int_2d(a[::2, ::2], 1, 1, 11)
+    assert get_int_2d(a[::2, ::2], 1, 1) == 11
+
+    assert get_int_2d(a[::2, ::2], 0, 1) == 2
+    assert get_int_2d(a[::2, ::2], 1, 0) == 8
+
+    assert get_int_2d(a[1:, 1:], 0, 0) == 6
+    set_int_2d(a[1:, 1:], 0, 0, 7)
+    assert get_int_2d(a[1:, 1:], 0, 0) == 7
+
 def test_fixedsize():
     from pymdspan import get_int_2d_fixed2n, get_int_2d_fixed22
 
