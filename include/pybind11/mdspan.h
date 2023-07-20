@@ -117,7 +117,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
             return false;
         }
     }
-    b = TypeB(a.data(), map);
+    b = TypeB(a.data_handle(), map);
     return true;
 }
 
@@ -158,7 +158,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
             return false;
         }
     }
-    b = TypeB(a.data(), map);
+    b = TypeB(a.data_handle(), map);
     return true;
 }
 
