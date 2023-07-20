@@ -3,9 +3,9 @@
 
 namespace stdex = std::experimental;
 
-using Extents1D = stdex::extents<size_t, stdex::dynamic_extent>;
-using Extents2D = stdex::extents<size_t, stdex::dynamic_extent, stdex::dynamic_extent>;
-using Extents3D = stdex::extents<size_t, stdex::dynamic_extent, stdex::dynamic_extent, stdex::dynamic_extent>;
+using Extents1D = stdex::dextents<size_t, 1>;
+using Extents2D = stdex::dextents<size_t, 2>;
+using Extents3D = stdex::dextents<size_t, 3>;
 
 template<typename T>
 using DenseSpan2D = stdex::mdspan<T, Extents2D, stdex::layout_right>;

@@ -7,6 +7,7 @@
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
 using std::mdspan;
+using std::dextents;
 using std::dynamic_extent;
 using std::extents;
 using std::layout_left;
@@ -19,6 +20,7 @@ PYBIND11_NAMESPACE_END(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
 using std::experimental::mdspan;
+using std::experimental::dextents;
 using std::experimental::dynamic_extent;
 using std::experimental::extents;
 using std::experimental::layout_left;
@@ -36,12 +38,11 @@ PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
 
 // Convert to fully-unconstrained numpy-compatible mapping
-// TODO do this without triggering -Wunused-value
 template<typename Extents>
 struct fully_dynamic_extents;
 template<size_t... Extent>
 struct fully_dynamic_extents<extents<size_t, Extent...>> {
-    using type = extents<size_t, (Extent, dynamic_extent)...>;
+    using type = dextents<size_t, sizeof...(Extent)>;
 };
 
 // Converts a Numpy ndarray to a dynamic mdspan

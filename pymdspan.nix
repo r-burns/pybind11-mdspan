@@ -23,7 +23,6 @@ stdenv.mkDerivation rec {
     "-Wall"
     "-Wextra"
     "-Wpedantic"
-    "-Wno-unused-value" # coercing parameter packs
   ];
 
   nativeBuildInputs = [
