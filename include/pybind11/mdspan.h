@@ -40,8 +40,8 @@ PYBIND11_NAMESPACE_BEGIN(detail)
 template<typename Extents>
 struct fully_dynamic_extents;
 template<size_t... Extent>
-struct fully_dynamic_extents<extents<Extent...>> {
-    using type = extents<(Extent, dynamic_extent)...>;
+struct fully_dynamic_extents<extents<size_t, Extent...>> {
+    using type = extents<size_t, (Extent, dynamic_extent)...>;
 };
 
 // Converts a Numpy ndarray to a dynamic mdspan
