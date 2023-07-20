@@ -107,17 +107,19 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 
     typename TypeB::mapping_type map(a.extents());
     for (size_t i = 0; i < Extents::rank(); i++) {
-        if (b.static_extent(i) != dynamic_extent &&
-            b.static_extent(i) != a.extent(i)) {
+        if (Extents::static_extent(i) != dynamic_extent &&
+            Extents::static_extent(i) != a.extent(i)) {
             PYMDSPAN_LOG("Static extent does not match\n");
             return false;
         }
+    }
+    b = TypeB(a.data_handle(), map);
+    for (size_t i = 0; i < Extents::rank(); i++) {
         if (map.stride(i) != a.stride(i)) {
             PYMDSPAN_LOG("Stride does not match (got %ld, expected %ld)\n", a.stride(i), b.stride(i));
             return false;
         }
     }
-    b = TypeB(a.data_handle(), map);
     return true;
 }
 
@@ -152,8 +154,8 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 
     typename TypeB::mapping_type map{Extents{a.extents()}, strides};
     for (size_t i = 0; i < Extents::rank(); i++) {
-        if (b.static_extent(i) != dynamic_extent &&
-            b.static_extent(i) != a.extent(i)) {
+        if (Extents::static_extent(i) != dynamic_extent &&
+            Extents::static_extent(i) != a.extent(i)) {
             PYMDSPAN_LOG("Static extent does not match\n");
             return false;
         }
