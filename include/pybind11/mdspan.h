@@ -6,7 +6,7 @@
 #include <mdspan>
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
-using std::basic_mdspan;
+using std::mdspan;
 using std::dynamic_extent;
 using std::extents;
 using std::layout_left;
@@ -18,7 +18,7 @@ PYBIND11_NAMESPACE_END(PYBIND11_NAMESPACE)
 #include <experimental/mdspan>
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
-using std::experimental::basic_mdspan;
+using std::experimental::mdspan;
 using std::experimental::dynamic_extent;
 using std::experimental::extents;
 using std::experimental::layout_left;
@@ -46,9 +46,9 @@ struct fully_dynamic_extents<extents<Extent...>> {
 
 // Converts a Numpy ndarray to a dynamic mdspan
 template<typename Scalar, typename Extents, typename Layout, typename Access>
-void ndarray_to_mdspan(array_t<Scalar>& arr, basic_mdspan<Scalar, Extents, Layout, Access>& ret) {
+void ndarray_to_mdspan(array_t<Scalar>& arr, mdspan<Scalar, Extents, Layout, Access>& ret) {
 
-    using Type = basic_mdspan<Scalar, Extents, Layout, Access>;
+    using Type = mdspan<Scalar, Extents, Layout, Access>;
 
     // Catch programmer errors
     static_assert(Extents::rank() == Extents::rank_dynamic(),
@@ -91,11 +91,11 @@ template<
     typename DynExtents
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
-        const basic_mdspan<Scalar, DynExtents, layout_stride, Access> a,
-        basic_mdspan<Scalar, Extents, layout_right, Access>& b) {
+        const mdspan<Scalar, DynExtents, layout_stride, Access> a,
+        mdspan<Scalar, Extents, layout_right, Access>& b) {
 
-    using TypeA = basic_mdspan<Scalar, DynExtents, layout_stride, Access>;
-    using TypeB = basic_mdspan<Scalar, Extents, layout_right, Access>;
+    using TypeA = mdspan<Scalar, DynExtents, layout_stride, Access>;
+    using TypeB = mdspan<Scalar, Extents, layout_right, Access>;
 
     // Catch programmer errors
     static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
@@ -126,18 +126,18 @@ template<
     typename DynExtents,
     typename = typename std::enable_if<
         !std::is_same<
-            basic_mdspan<Scalar, DynExtents, layout_stride, Access>,
-            basic_mdspan<Scalar, Extents, Layout, Access>
+            mdspan<Scalar, DynExtents, layout_stride, Access>,
+            mdspan<Scalar, Extents, Layout, Access>
         >::value
         && Extents::rank() != Extents::rank_dynamic()
     >::type
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
-        const basic_mdspan<Scalar, DynExtents, layout_stride, Access> a,
-        basic_mdspan<Scalar, Extents, Layout, Access>& b) {
+        const mdspan<Scalar, DynExtents, layout_stride, Access> a,
+        mdspan<Scalar, Extents, Layout, Access>& b) {
 
-    using TypeA = basic_mdspan<Scalar, DynExtents, layout_stride, Access>;
-    using TypeB = basic_mdspan<Scalar, Extents, Layout, Access>;
+    using TypeA = mdspan<Scalar, DynExtents, layout_stride, Access>;
+    using TypeB = mdspan<Scalar, Extents, Layout, Access>;
 
     // Catch programmer errors
     static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
@@ -167,15 +167,15 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 // and then check that the mdspan satisfies the type we actually want.
 template<typename Scalar, typename Extents, typename Access, typename Layout>
 struct type_caster<
-    basic_mdspan<Scalar, Extents, Layout, Access>
+    mdspan<Scalar, Extents, Layout, Access>
 > {
 
 private:
-    using Type = basic_mdspan<Scalar, Extents, Layout, Access>;
+    using Type = mdspan<Scalar, Extents, Layout, Access>;
     using Mapping = typename Type::mapping_type;
 
     using DynExtents = typename fully_dynamic_extents<Extents>::type;
-    using DynType = basic_mdspan<Scalar, DynExtents, layout_stride, Access>;
+    using DynType = mdspan<Scalar, DynExtents, layout_stride, Access>;
 
     using Array = array_t<Scalar, array::forcecast>;
 
