@@ -6,27 +6,14 @@
 }:
 stdenv.mkDerivation rec {
   pname = "mdspan";
-  version = "0.1.0";
+  version = "0.6.0";
 
   src = fetchFromGitHub {
     owner = "kokkos";
     repo = pname;
     rev = "mdspan-${version}";
-    sha256 = "0hyfgrsqrj7nhs148klbhg5ckm0npwnhhbqal98jbkphiz6xnb55";
+    sha256 = "17zmjid1vjvpmvgd1k023ljk8yygqw18xilx78b7pxg7xws3w0bg";
   };
-
-  patches = [
-    # Remove exported target's interface C++ standard
-    (fetchpatch {
-      url = "https://github.com/kokkos/mdspan/commit/c9058a9f9d8fe9a1f69d20d9ba7ad23d820b950c.patch";
-      sha256 = "1zjk14rasa2856dfvyk8hma9annhjw944m691hp87kl0ykjrzkjw";
-    })
-    # Use system gtest
-    (fetchpatch {
-      url = "https://github.com/kokkos/mdspan/commit/11076ff0d841b8da05a2213b5eab58c4218acaa0.patch";
-      sha256 = "0rcsh14i972a53pg7vfr4ijp9gwv10lyvvajxffim7jrk4gfn5qn";
-    })
-  ];
 
   nativeBuildInputs = [
     cmake

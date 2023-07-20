@@ -3,23 +3,22 @@
 
 namespace stdex = std::experimental;
 
-using Extents1D = stdex::extents<stdex::dynamic_extent>;
-using Extents2D = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent>;
-using Extents3D = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent, stdex::dynamic_extent>;
-using Stride2D = stdex::layout_stride<stdex::dynamic_extent, stdex::dynamic_extent>;
+using Extents1D = stdex::extents<size_t, stdex::dynamic_extent>;
+using Extents2D = stdex::extents<size_t, stdex::dynamic_extent, stdex::dynamic_extent>;
+using Extents3D = stdex::extents<size_t, stdex::dynamic_extent, stdex::dynamic_extent, stdex::dynamic_extent>;
 
 template<typename T>
-using DenseSpan2D = stdex::basic_mdspan<T, Extents2D, stdex::layout_right>;
+using DenseSpan2D = stdex::mdspan<T, Extents2D, stdex::layout_right>;
 template<typename T>
-using DenseSpan3D = stdex::basic_mdspan<T, Extents3D, stdex::layout_right>;
+using DenseSpan3D = stdex::mdspan<T, Extents3D, stdex::layout_right>;
 template<typename T>
-using StridedSpan2D = stdex::basic_mdspan<T, Extents2D, Stride2D>;
+using StridedSpan2D = stdex::mdspan<T, Extents2D, stdex::layout_stride>;
 
 template<typename T>
 T sum_2d(StridedSpan2D<T> a) {
     T sum = 0;
-    for (int i = 0; i < a.extent(0); i++) {
-        for (int j = 0; j < a.extent(1); j++) {
+    for (size_t i = 0; i < a.extent(0); i++) {
+        for (size_t j = 0; j < a.extent(1); j++) {
             sum += a(i, j);
         }
     }
@@ -29,8 +28,8 @@ T sum_2d(StridedSpan2D<T> a) {
 template<typename T>
 T sum_2d_dense(DenseSpan2D<T> a) {
     T sum = 0;
-    for (int i = 0; i < a.extent(0); i++) {
-        for (int j = 0; j < a.extent(1); j++) {
+    for (size_t i = 0; i < a.extent(0); i++) {
+        for (size_t j = 0; j < a.extent(1); j++) {
             sum += a(i, j);
         }
     }
@@ -40,9 +39,9 @@ T sum_2d_dense(DenseSpan2D<T> a) {
 template<typename T>
 T sum_3d_dense(DenseSpan3D<T> a) {
     T sum = 0;
-    for (int i = 0; i < a.extent(0); i++) {
-        for (int j = 0; j < a.extent(1); j++) {
-            for (int k = 0; k < a.extent(2); k++) {
+    for (size_t i = 0; i < a.extent(0); i++) {
+        for (size_t j = 0; j < a.extent(1); j++) {
+            for (size_t k = 0; k < a.extent(2); k++) {
                 sum += a(i, j, k);
             }
         }
@@ -64,13 +63,13 @@ PYBIND11_MODULE(pymdspan, m) {
 
     using namespace pybind11::detail;
     {
-        using arr = basic_mdspan<int64_t, extents<2, dynamic_extent>, Stride2D>;
+        using arr = mdspan<int64_t, extents<size_t, 2, dynamic_extent>, stdex::layout_stride>;
         m.def("get_int_2d_fixed2n", [](arr a, int i, int j) -> int64_t {
                 return a(i, j);
         });
     }
     {
-        using arr = basic_mdspan<int64_t, extents<2, 2>, Stride2D>;
+        using arr = mdspan<int64_t, extents<size_t, 2, 2>, stdex::layout_stride>;
         m.def("get_int_2d_fixed22", [](arr a, int i, int j) -> int64_t {
                 return a(i, j);
         });

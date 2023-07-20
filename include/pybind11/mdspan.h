@@ -6,7 +6,7 @@
 #include <mdspan>
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
-using std::basic_mdspan;
+using std::mdspan;
 using std::dynamic_extent;
 using std::extents;
 using std::layout_left;
@@ -18,7 +18,7 @@ PYBIND11_NAMESPACE_END(PYBIND11_NAMESPACE)
 #include <experimental/mdspan>
 PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
-using std::experimental::basic_mdspan;
+using std::experimental::mdspan;
 using std::experimental::dynamic_extent;
 using std::experimental::extents;
 using std::experimental::layout_left;
@@ -39,32 +39,26 @@ PYBIND11_NAMESPACE_BEGIN(detail)
 // TODO do this without triggering -Wunused-value
 template<typename Extents>
 struct fully_dynamic_extents;
-template<ptrdiff_t... Extent>
-struct fully_dynamic_extents<extents<Extent...>> {
-    using type = extents<(Extent, dynamic_extent)...>;
-};
-template<typename Extents>
-struct fully_dynamic_layout;
-template<ptrdiff_t... Extent>
-struct fully_dynamic_layout<extents<Extent...>> {
-    using type = layout_stride<(Extent, dynamic_extent)...>;
+template<size_t... Extent>
+struct fully_dynamic_extents<extents<size_t, Extent...>> {
+    using type = extents<size_t, (Extent, dynamic_extent)...>;
 };
 
 // Converts a Numpy ndarray to a dynamic mdspan
 template<typename Scalar, typename Extents, typename Layout, typename Access>
-void ndarray_to_mdspan(array_t<Scalar>& arr, basic_mdspan<Scalar, Extents, Layout, Access>& ret) {
+void ndarray_to_mdspan(array_t<Scalar>& arr, mdspan<Scalar, Extents, Layout, Access>& ret) {
 
-    using Type = basic_mdspan<Scalar, Extents, Layout, Access>;
+    using Type = mdspan<Scalar, Extents, Layout, Access>;
 
     // Catch programmer errors
     static_assert(Extents::rank() == Extents::rank_dynamic(),
             "Extents must be fully dynamic");
-    static_assert(!Type::mapping_type::is_always_contiguous(),
+    static_assert(!Type::mapping_type::is_always_exhaustive(),
             "Layout must be fully strided");
 
     // Arrays for ndarray shape + stride layout
-    std::array<ptrdiff_t, Extents::rank()> extents_array;
-    std::array<ptrdiff_t, Extents::rank()> strides_array;
+    std::array<size_t, Extents::rank()> extents_array;
+    std::array<size_t, Extents::rank()> strides_array;
     for (size_t i = 0; i < Extents::rank(); i++) {
         // TODO will this ever happen?
         if (arr.strides(i) % sizeof(Scalar) != 0) {
@@ -84,87 +78,89 @@ void ndarray_to_mdspan(array_t<Scalar>& arr, basic_mdspan<Scalar, Extents, Layou
 // NB we won't implement all conversions here, just the ones we care about.
 // Specifically, from fully-dynamic to some level of static specialization.
 template<typename SpanA, typename SpanB>
-_MDSPAN_CONSTEXPR_14 bool convert_to(const SpanA&, SpanB&);
+_MDSPAN_CONSTEXPR_14 bool convert_to(const SpanA&, std::unique_ptr<SpanB>&);
 
 template<typename Span>
-_MDSPAN_CONSTEXPR_14 bool convert_to(const Span& a, Span& b) {
-    b = a;
+_MDSPAN_CONSTEXPR_14 bool convert_to(const Span& a, std::unique_ptr<Span>& b) {
+    b = std::make_unique<Span>(a);
     return true;
 }
 
 template<
     typename Scalar, typename Extents, typename Access,
-    typename DynExtents, typename DynLayout
+    typename DynExtents
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
-        const basic_mdspan<Scalar, DynExtents, DynLayout, Access> a,
-        basic_mdspan<Scalar, Extents, layout_right, Access>& b) {
+        const mdspan<Scalar, DynExtents, layout_stride, Access> a,
+        std::unique_ptr<mdspan<Scalar, Extents, layout_right, Access>>& b) {
 
-    using TypeA = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
-    using TypeB = basic_mdspan<Scalar, Extents, layout_right, Access>;
+    using TypeA = mdspan<Scalar, DynExtents, layout_stride, Access>;
+    using TypeB = mdspan<Scalar, Extents, layout_right, Access>;
 
     // Catch programmer errors
     static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
             "Extents must be fully dynamic");
-    static_assert(!TypeA::mapping_type::is_always_contiguous(),
+    static_assert(!TypeA::mapping_type::is_always_exhaustive(),
             "Layout must be fully strided");
     static_assert(Extents::rank() == Extents::rank_dynamic(),
             "Partial static extents not yet implemented :(");
 
     typename TypeB::mapping_type map(a.extents());
     for (size_t i = 0; i < Extents::rank(); i++) {
-        if (b.static_extent(i) != dynamic_extent &&
-            b.static_extent(i) != a.extent(i)) {
+        if (Extents::static_extent(i) != dynamic_extent &&
+            Extents::static_extent(i) != a.extent(i)) {
             PYMDSPAN_LOG("Static extent does not match\n");
             return false;
         }
+    }
+    b = std::make_unique<TypeB>(a.data_handle(), map);
+    for (size_t i = 0; i < Extents::rank(); i++) {
         if (map.stride(i) != a.stride(i)) {
             PYMDSPAN_LOG("Stride does not match (got %ld, expected %ld)\n", a.stride(i), b.stride(i));
             return false;
         }
     }
-    b = TypeB(a.data(), map);
     return true;
 }
 
 template<
     typename Scalar, typename Extents, typename Layout, typename Access,
-    typename DynExtents, typename DynLayout,
+    typename DynExtents,
     typename = typename std::enable_if<
         !std::is_same<
-            basic_mdspan<Scalar, DynExtents, DynLayout, Access>,
-            basic_mdspan<Scalar, Extents, Layout, Access>
+            mdspan<Scalar, DynExtents, layout_stride, Access>,
+            mdspan<Scalar, Extents, Layout, Access>
         >::value
         && Extents::rank() != Extents::rank_dynamic()
     >::type
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
-        const basic_mdspan<Scalar, DynExtents, DynLayout, Access> a,
-        basic_mdspan<Scalar, Extents, Layout, Access>& b) {
+        const mdspan<Scalar, DynExtents, layout_stride, Access> a,
+        std::unique_ptr<mdspan<Scalar, Extents, Layout, Access>>& b) {
 
-    using TypeA = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
-    using TypeB = basic_mdspan<Scalar, Extents, Layout, Access>;
+    using TypeA = mdspan<Scalar, DynExtents, layout_stride, Access>;
+    using TypeB = mdspan<Scalar, Extents, Layout, Access>;
 
     // Catch programmer errors
     static_assert(DynExtents::rank() == DynExtents::rank_dynamic(),
             "Extents must be fully dynamic");
-    static_assert(!TypeA::mapping_type::is_always_contiguous(),
+    static_assert(!TypeA::mapping_type::is_always_exhaustive(),
             "Layout must be fully strided");
 
-    std::array<ptrdiff_t, Extents::rank()> strides;
+    std::array<size_t, Extents::rank()> strides;
     for (size_t i = 0; i < Extents::rank(); i++) {
         strides[i] = a.stride(i);
     }
 
-    typename TypeB::mapping_type map = {a.extents(), strides};
+    typename TypeB::mapping_type map{Extents{a.extents()}, strides};
     for (size_t i = 0; i < Extents::rank(); i++) {
-        if (b.static_extent(i) != dynamic_extent &&
-            b.static_extent(i) != a.extent(i)) {
+        if (Extents::static_extent(i) != dynamic_extent &&
+            Extents::static_extent(i) != a.extent(i)) {
             PYMDSPAN_LOG("Static extent does not match\n");
             return false;
         }
     }
-    b = TypeB(a.data(), map);
+    b = std::make_unique<TypeB>(a.data_handle(), map);
     return true;
 }
 
@@ -173,20 +169,19 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
 // and then check that the mdspan satisfies the type we actually want.
 template<typename Scalar, typename Extents, typename Access, typename Layout>
 struct type_caster<
-    basic_mdspan<Scalar, Extents, Layout, Access>
+    mdspan<Scalar, Extents, Layout, Access>
 > {
 
 private:
-    using Type = basic_mdspan<Scalar, Extents, Layout, Access>;
+    using Type = mdspan<Scalar, Extents, Layout, Access>;
     using Mapping = typename Type::mapping_type;
 
     using DynExtents = typename fully_dynamic_extents<Extents>::type;
-    using DynLayout  = typename fully_dynamic_layout <Extents>::type;
-    using DynType = basic_mdspan<Scalar, DynExtents, DynLayout, Access>;
+    using DynType = mdspan<Scalar, DynExtents, layout_stride, Access>;
 
     using Array = array_t<Scalar, array::forcecast>;
 
-    Type ref;
+    std::unique_ptr<Type> ref;
 
 public:
     static constexpr auto name = _("mdspan-from-ndarray");
@@ -222,8 +217,8 @@ public:
         return true;
     }
 
-    operator Type*() { return &ref; }
-    operator Type&() { return ref; }
+    operator Type*() { return ref.get(); }
+    operator Type&() { return *ref; }
 
     template<typename U>
     using cast_op_type = pybind11::detail::cast_op_type<U>;
