@@ -78,11 +78,11 @@ void ndarray_to_mdspan(array_t<Scalar>& arr, mdspan<Scalar, Extents, Layout, Acc
 // NB we won't implement all conversions here, just the ones we care about.
 // Specifically, from fully-dynamic to some level of static specialization.
 template<typename SpanA, typename SpanB>
-_MDSPAN_CONSTEXPR_14 bool convert_to(const SpanA&, SpanB&);
+_MDSPAN_CONSTEXPR_14 bool convert_to(const SpanA&, std::unique_ptr<SpanB>&);
 
 template<typename Span>
-_MDSPAN_CONSTEXPR_14 bool convert_to(const Span& a, Span& b) {
-    b = a;
+_MDSPAN_CONSTEXPR_14 bool convert_to(const Span& a, std::unique_ptr<Span>& b) {
+    b = std::make_unique<Span>(a);
     return true;
 }
 
@@ -92,7 +92,7 @@ template<
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
         const mdspan<Scalar, DynExtents, layout_stride, Access> a,
-        mdspan<Scalar, Extents, layout_right, Access>& b) {
+        std::unique_ptr<mdspan<Scalar, Extents, layout_right, Access>>& b) {
 
     using TypeA = mdspan<Scalar, DynExtents, layout_stride, Access>;
     using TypeB = mdspan<Scalar, Extents, layout_right, Access>;
@@ -113,7 +113,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
             return false;
         }
     }
-    b = TypeB(a.data_handle(), map);
+    b = std::make_unique<TypeB>(a.data_handle(), map);
     for (size_t i = 0; i < Extents::rank(); i++) {
         if (map.stride(i) != a.stride(i)) {
             PYMDSPAN_LOG("Stride does not match (got %ld, expected %ld)\n", a.stride(i), b.stride(i));
@@ -136,7 +136,7 @@ template<
 >
 _MDSPAN_CONSTEXPR_14 bool convert_to(
         const mdspan<Scalar, DynExtents, layout_stride, Access> a,
-        mdspan<Scalar, Extents, Layout, Access>& b) {
+        std::unique_ptr<mdspan<Scalar, Extents, Layout, Access>>& b) {
 
     using TypeA = mdspan<Scalar, DynExtents, layout_stride, Access>;
     using TypeB = mdspan<Scalar, Extents, Layout, Access>;
@@ -160,7 +160,7 @@ _MDSPAN_CONSTEXPR_14 bool convert_to(
             return false;
         }
     }
-    b = TypeB(a.data_handle(), map);
+    b = std::make_unique<TypeB>(a.data_handle(), map);
     return true;
 }
 
@@ -181,7 +181,7 @@ private:
 
     using Array = array_t<Scalar, array::forcecast>;
 
-    Type ref;
+    std::unique_ptr<Type> ref;
 
 public:
     static constexpr auto name = _("mdspan-from-ndarray");
@@ -217,8 +217,8 @@ public:
         return true;
     }
 
-    operator Type*() { return &ref; }
-    operator Type&() { return ref; }
+    operator Type*() { return ref.get(); }
+    operator Type&() { return *ref; }
 
     template<typename U>
     using cast_op_type = pybind11::detail::cast_op_type<U>;
